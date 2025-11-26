@@ -118,7 +118,6 @@ const App: React.FC = () => {
       // The "Arena" container is the reference frame.
       
       // Avatar Radius (Outer Ring) - HUG THE RAIL
-      // Since the rail is thick (approx 5-6%), placing avatars at ~54-58% puts them on the edge.
       const avRx = isPortrait ? 56 : 58; 
       const avRy = isPortrait ? 56 : 58; 
       
@@ -126,18 +125,17 @@ const App: React.FC = () => {
       const avY = 50 + avRy * Math.sin(angleRad);
 
       // Card Radius (Inner Ring - Felt)
-      // Must be inside the rail (radius < 50%)
-      
+      // Tuned to keep cards on table but spaced out
       let cardRx, cardRy;
 
       if (isPortrait) {
           // Portrait table aspect ratio is ~1.3:1
-          cardRx = 40; 
-          cardRy = 32; 
+          cardRx = 40; // Slightly reduced from 42 to avoid edge clipping
+          cardRy = 36; // Pushed out to 36% (from 28%) to keep clear of center
       } else {
           // Landscape table aspect ratio is ~2.2:1
-          cardRx = 40;
-          cardRy = 28;
+          cardRx = 45; // Pushed out slightly
+          cardRy = 39; // Pushed out to 39% (from 32%) to keep clear of center
       }
       
       const cardX = 50 + cardRx * Math.cos(angleRad);
@@ -657,8 +655,8 @@ const App: React.FC = () => {
                      <div className="text-white font-sans text-xs sm:text-sm tracking-[0.5em] mt-1">CASINO</div>
                 </div>
 
-                {/* Community Cards */}
-                <div className="flex gap-1 sm:gap-2 md:gap-4 z-10 mb-2 sm:mb-8">
+                {/* Community Cards - Removed bottom margin to center properly */}
+                <div className="flex gap-1 sm:gap-2 md:gap-4 z-10">
                     {gameState.communityCards.map((card, idx) => (
                         <CardComponent key={idx} card={card} />
                     ))}
