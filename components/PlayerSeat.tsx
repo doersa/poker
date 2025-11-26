@@ -16,6 +16,7 @@ interface PlayerSeatProps {
 const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, part, position, isUser, gameState }) => {
   const showCards = isUser || (gameState.phase === 'Showdown' && player.status !== 'FOLDED');
   const isFolded = player.status === PlayerStatus.FOLDED;
+  const isAllIn = player.status === PlayerStatus.ALL_IN;
 
   // --- RENDER HAND (Inside Table) ---
   if (part === 'hand') {
@@ -69,6 +70,7 @@ const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, par
             <div className={`relative w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full border-4 flex flex-col items-center justify-center bg-gray-800 shadow-2xl
                 ${isActive ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-110' : 'border-gray-600'}
                 ${isFolded ? 'border-red-900 bg-gray-900' : ''}
+                ${isAllIn ? 'border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.9)] scale-110 ring-2 ring-orange-400 animate-pulse' : ''}
                 transition-all duration-300
             `}>
                 <img 
@@ -94,6 +96,7 @@ const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, par
           {player.lastAction && (
             <div className={`absolute -top-5 sm:-top-8 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded shadow-lg animate-bounce whitespace-nowrap
                 ${player.lastAction === 'FOLD' ? 'bg-red-800' : 'bg-blue-600'}
+                ${player.lastAction === 'ALL IN' ? 'bg-orange-600 scale-125' : ''}
             `}>
                 {player.lastAction}
             </div>

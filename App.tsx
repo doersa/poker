@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GameState, Player, GamePhase, PlayerStatus, HandResult, Card, GameEffect, BotDifficulty } from './types';
 import { createDeck, evaluateHand, getBotAction } from './services/pokerEngine';
@@ -137,7 +138,7 @@ const App: React.FC = () => {
           // Reduce vertical radius slightly to ensure cards don't clip the rail padding
           // even during deal animations.
           cardRx = 45; 
-          cardRy = 31; 
+          cardRy = 33; 
       }
       
       const cardX = 50 + cardRx * Math.cos(angleRad);
@@ -329,6 +330,7 @@ const App: React.FC = () => {
     } else if (action === 'all-in') {
         triggerEffect({ type: 'TEXT', content: 'ALL IN!', color: 'text-orange-500', startPos: vfxPos });
         triggerEffect({ type: 'CHIP', startPos: vfxPos });
+        triggerEffect({ type: 'ALL_IN_SPOTLIGHT', startPos: vfxPos }); // Add Spotlight Effect
     } else if (action === 'call') {
         triggerEffect({ type: 'TEXT', content: 'CALL', color: 'text-blue-400', startPos: vfxPos });
         triggerEffect({ type: 'CHIP', startPos: vfxPos });

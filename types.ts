@@ -96,7 +96,7 @@ export interface GameState {
 
 export interface GameEffect {
   id: number;
-  type: 'TEXT' | 'CHIP' | 'CONFETTI' | 'WIN_BANNER';
+  type: 'TEXT' | 'CHIP' | 'CONFETTI' | 'WIN_BANNER' | 'ALL_IN_SPOTLIGHT';
   content?: string;
   subContent?: string; // For win details
   color?: string; // Tailwind color class e.g. 'text-red-500'

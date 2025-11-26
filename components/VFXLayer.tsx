@@ -27,7 +27,11 @@ const EffectItem: React.FC<{ effect: GameEffect; onComplete: (id: number) => voi
     });
 
     // Cleanup timer based on effect type duration
-    const duration = effect.type === 'CONFETTI' ? 4000 : effect.type === 'WIN_BANNER' ? 3500 : 1000;
+    let duration = 1000;
+    if (effect.type === 'CONFETTI') duration = 4000;
+    if (effect.type === 'WIN_BANNER') duration = 3500;
+    if (effect.type === 'ALL_IN_SPOTLIGHT') duration = 2000;
+
     const cleanup = setTimeout(() => {
       onComplete(effect.id);
     }, duration);
@@ -123,6 +127,48 @@ const EffectItem: React.FC<{ effect: GameEffect; onComplete: (id: number) => voi
         }}
       >
         $
+      </div>
+    );
+  }
+
+  // --- All In Spotlight ---
+  if (effect.type === 'ALL_IN_SPOTLIGHT') {
+    return (
+      <div 
+        className="absolute transition-all duration-500 ease-out z-40"
+        style={{
+          left: effect.startPos.left,
+          top: effect.startPos.top,
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
+        {/* Shockwave Ring */}
+        <div 
+            className="absolute top-1/2 left-1/2 w-24 h-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-orange-500 box-border opacity-0 transition-all duration-1000"
+            style={{
+                transform: animating ? 'translate(-50%, -50%) scale(3)' : 'translate(-50%, -50%) scale(0.5)',
+                opacity: animating ? 0 : 1,
+                borderWidth: animating ? '0px' : '4px'
+            }}
+        />
+        
+        {/* Core Flash */}
+        <div 
+            className="absolute top-1/2 left-1/2 w-20 h-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500 blur-md transition-all duration-300"
+            style={{
+                opacity: animating ? 0 : 0.8,
+                transform: animating ? 'translate(-50%, -50%) scale(1.5)' : 'translate(-50%, -50%) scale(0)'
+            }}
+        />
+
+        {/* Dramatic Spotlight Beam */}
+        <div 
+             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[100%] w-[150px] h-[400px] origin-bottom bg-gradient-to-t from-orange-500/30 via-orange-500/10 to-transparent blur-xl transition-all duration-1000 delay-100"
+             style={{
+                 opacity: animating ? 0 : 1,
+                 transform: animating ? 'translate(-50%, -100%) scaleY(0)' : 'translate(-50%, -100%) scaleY(1)'
+             }}
+        />
       </div>
     );
   }
