@@ -40,7 +40,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
           <div className="text-center">{rankDisplay(c.rank)}</div>
           <div className="text-center">{c.suit}</div>
         </div>
-        <div className={`absolute inset-0 flex items-center justify-center text-xl sm:text-4xl ${isRed ? 'text-red-600' : 'text-black'}`}>
+        <div className={`absolute inset-0 flex items-center justify-center text-lg sm:text-4xl ${isRed ? 'text-red-600' : 'text-black'}`}>
           {c.suit}
         </div>
         <div className={`text-[10px] sm:text-sm font-bold leading-none rotate-180 ${isRed ? 'text-red-600' : 'text-black'}`}>
@@ -54,7 +54,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
   // If no card data provided
   if (!card) {
       return (
-        <div className={`w-12 h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 ${className}`} style={style}>
+        <div className={`w-10 h-14 sm:w-12 sm:h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 ${className}`} style={style}>
             <CardBack />
         </div>
       );
@@ -63,7 +63,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
   // 3D Flip Structure
   return (
     <div 
-      className={`relative w-12 h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 perspective-1000 animate-deal ${className}`}
+      className={`relative w-10 h-14 sm:w-12 sm:h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 perspective-1000 animate-deal ${className}`}
       style={style}
     >
       <div 

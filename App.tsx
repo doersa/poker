@@ -36,15 +36,27 @@ const App: React.FC = () => {
   const [showAdviceModal, setShowAdviceModal] = useState(false);
   const [effects, setEffects] = useState<GameEffect[]>([]);
   const [isBGMEnabled, setIsBGMEnabled] = useState(false);
+  
+  // Responsive State
+  const [isPortrait, setIsPortrait] = useState(typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const effectIdCounter = useRef(0);
 
   // --- Initialization ---
   useEffect(() => {
     initializeGame();
+    
+    // Layout Listener
+    const handleResize = () => {
+        setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
         if (timerRef.current) clearTimeout(timerRef.current);
         stopBGM();
+        window.removeEventListener('resize', handleResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -94,7 +106,7 @@ const App: React.FC = () => {
       setEffects(prev => prev.filter(e => e.id !== id));
   };
 
-  // Calculate positions for Avatar (Outer) and Cards (Inner/Table)
+  // Calculate positions
   const getPlayerPosition = (index: number, totalPlayers: number) => {
       const angleStep = 360 / totalPlayers;
       // Start at 90deg (bottom) to have user centered if index 0
@@ -102,20 +114,31 @@ const App: React.FC = () => {
       const angleDeg = startAngle + (index * angleStep);
       const angleRad = angleDeg * (Math.PI / 180);
       
-      // Avatar Radius (Outer Ring - near screen edge)
-      // Elliptical distribution to match screen aspect ratio roughly
-      const avRx = 45; // 45% of width
-      const avRy = 42; // 42% of height
+      // We are positioning relative to the TABLE CENTER now.
+      // The "Arena" container is the reference frame.
+      
+      // Avatar Radius (Outer Ring) - HUG THE RAIL
+      // Since the rail is thick (approx 5-6%), placing avatars at ~54-58% puts them on the edge.
+      const avRx = isPortrait ? 56 : 58; 
+      const avRy = isPortrait ? 56 : 58; 
       
       const avX = 50 + avRx * Math.cos(angleRad);
       const avY = 50 + avRy * Math.sin(angleRad);
 
-      // Card Radius (Inner Ring - ON THE TABLE)
-      // The table is roughly 60-90% width and 30-50% height
-      // We want cards to land on the felt.
-      // Felt is Aspect 2:1.
-      const cardRx = 28; // Closer to center horizontally
-      const cardRy = 20; // Closer to center vertically to fit on the flattened table view
+      // Card Radius (Inner Ring - Felt)
+      // Must be inside the rail (radius < 50%)
+      
+      let cardRx, cardRy;
+
+      if (isPortrait) {
+          // Portrait table aspect ratio is ~1.3:1
+          cardRx = 40; 
+          cardRy = 32; 
+      } else {
+          // Landscape table aspect ratio is ~2.2:1
+          cardRx = 40;
+          cardRy = 28;
+      }
       
       const cardX = 50 + cardRx * Math.cos(angleRad);
       const cardY = 50 + cardRy * Math.sin(angleRad);
@@ -577,13 +600,13 @@ const App: React.FC = () => {
       {/* Header Info */}
       <div className="absolute top-0 w-full p-4 flex justify-between items-start z-10 pointer-events-none">
          <div className="flex flex-col gap-2 pointer-events-auto">
-             <div className="bg-black/50 p-2 rounded text-white backdrop-blur-sm">
+             <div className="bg-black/50 p-2 rounded text-white backdrop-blur-sm border border-gray-700">
                 <h1 className="text-xl font-bold text-yellow-500">Gemini Poker</h1>
                 <p className="text-sm text-gray-300">Blinds: {SMALL_BLIND}/{BIG_BLIND}</p>
              </div>
              
              <div className="flex gap-2">
-                 <div className="bg-black/50 p-2 rounded backdrop-blur-sm flex flex-col">
+                 <div className="bg-black/50 p-2 rounded backdrop-blur-sm flex flex-col border border-gray-700">
                     <label className="text-xs text-gray-400 font-bold mb-1">Difficulty</label>
                     <select 
                         value={gameState.difficulty}
@@ -597,47 +620,83 @@ const App: React.FC = () => {
                  </div>
                  <button 
                     onClick={toggleBGMHandler}
-                    className={`p-2 rounded backdrop-blur-sm border ${isBGMEnabled ? 'bg-green-900/50 border-green-500 text-green-300' : 'bg-black/50 border-gray-600 text-gray-400'}`}
+                    className={`p-2 rounded backdrop-blur-sm border ${isBGMEnabled ? 'bg-green-900/50 border-green-500 text-green-300' : 'bg-black/50 border-gray-700 text-gray-400'}`}
                  >
                      {isBGMEnabled ? '♫ On' : '♫ Off'}
                  </button>
              </div>
          </div>
          
-         <div className="bg-black/50 p-2 rounded text-white backdrop-blur-sm">
+         <div className="bg-black/50 p-2 rounded text-white backdrop-blur-sm border border-gray-700">
              <div className="text-center text-lg font-mono text-green-400">POT: ${Math.floor(gameState.pot)}</div>
              <div className="text-xs text-gray-400 text-center">{gameState.message}</div>
          </div>
       </div>
 
       {/* Game Arena - Full Screen Container */}
-      <div className="flex-grow relative flex items-center justify-center bg-gray-900 overflow-hidden">
+      <div className="flex-grow relative flex items-center justify-center bg-[#1a1a1a] overflow-hidden pb-32 md:pb-0">
         
-        {/* The Felt - Visual Table Only */}
-        <div className="poker-felt relative w-[90%] sm:w-[70%] md:w-[60%] aspect-[2/1] rounded-[200px] shadow-[0_0_50px_rgba(0,0,0,0.8)_inset] border-[16px] border-[#2c1e12] flex items-center justify-center z-0">
-            {/* Community Cards */}
-            <div className="flex gap-2 sm:gap-4 z-10 mb-2 sm:mb-8">
-                {gameState.communityCards.map((card, idx) => (
-                    <CardComponent key={idx} card={card} />
-                ))}
-                {Array.from({ length: 5 - gameState.communityCards.length }).map((_, idx) => (
-                    <div key={`placeholder-${idx}`} className="w-12 h-16 md:w-16 md:h-24 border-2 border-white/20 rounded-md bg-black/10"></div>
-                ))}
-            </div>
-        </div>
+        {/* THE TABLE - Using Realistic CSS Classes */}
+        <div 
+            className={`relative flex items-center justify-center transition-all duration-500 z-0
+                poker-rail
+                ${isPortrait ? 'w-[98%] aspect-[1.3/1]' : 'w-[85%] aspect-[2.2/1]'} 
+                rounded-[500px] /* Stadium Shape */
+                p-[20px] sm:p-[30px] /* Padding creates the Rail width */
+            `}
+        >
+            {/* The Felt (Inner) */}
+            <div className="poker-felt w-full h-full rounded-[450px] relative shadow-inner flex items-center justify-center border-4 border-black/20">
+                
+                {/* Betting Line (Decorative) */}
+                <div className="absolute inset-8 sm:inset-16 rounded-[400px] betting-line pointer-events-none opacity-50"></div>
 
-        {/* Players Overlay - Positioned relative to the full Arena */}
-        <div className="absolute inset-0 z-10 pointer-events-none">
-            {gameState.players.map((player, idx) => {
+                {/* Center Logo */}
+                <div className="absolute text-center opacity-20 pointer-events-none select-none">
+                     <div className="text-yellow-400 font-serif text-2xl sm:text-4xl font-bold tracking-widest">GEMINI</div>
+                     <div className="text-white font-sans text-xs sm:text-sm tracking-[0.5em] mt-1">CASINO</div>
+                </div>
+
+                {/* Community Cards */}
+                <div className="flex gap-1 sm:gap-2 md:gap-4 z-10 mb-2 sm:mb-8">
+                    {gameState.communityCards.map((card, idx) => (
+                        <CardComponent key={idx} card={card} />
+                    ))}
+                    {Array.from({ length: 5 - gameState.communityCards.length }).map((_, idx) => (
+                        <div key={`placeholder-${idx}`} className="w-10 h-14 sm:w-12 sm:h-16 md:w-16 md:h-24 border-2 border-white/10 rounded-md bg-black/20"></div>
+                    ))}
+                </div>
+
+                {/* PLAYER HANDS - Inside Felt */}
+                {gameState.players.map((player, idx) => {
+                    const positions = getPlayerPosition(player.id, gameState.players.length);
+                    return (
+                        <PlayerSeat 
+                            key={`hand-${player.id}`}
+                            player={player}
+                            part="hand"
+                            isActive={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === player.id)}
+                            isDealer={gameState.dealerIndex === gameState.players.findIndex(p => p.id === player.id)}
+                            position={positions.cards}
+                            isUser={!player.isBot}
+                            gameState={gameState}
+                        />
+                    );
+                })}
+            </div>
+            
+             {/* PLAYERS AVATARS - Rendered ON THE RAIL (Outside Felt but Inside Rail container logic) */}
+             {/* We use absolute positioning relative to the TABLE CONTAINER (The Rail) */}
+             {gameState.players.map((player, idx) => {
                 const positions = getPlayerPosition(player.id, gameState.players.length);
                 return (
                     <PlayerSeat 
-                        key={player.id}
+                        key={`avatar-${player.id}`}
                         player={player}
+                        part="avatar"
                         isActive={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === player.id)}
                         isDealer={gameState.dealerIndex === gameState.players.findIndex(p => p.id === player.id)}
-                        avatarPos={positions.avatar}
-                        cardPos={positions.cards}
+                        position={positions.avatar}
                         isUser={!player.isBot}
                         gameState={gameState}
                     />

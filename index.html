@@ -15,10 +15,40 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
-      .poker-felt {
-        background-color: #35654d;
-        background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2328503c' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+
+      /* Realistic Poker Table Styles */
+      .poker-rail {
+        background: conic-gradient(
+          from 90deg,
+          #3e2723 0%,
+          #5d4037 10%,
+          #3e2723 20%,
+          #281812 35%,
+          #3e2723 50%,
+          #5d4037 60%,
+          #3e2723 70%,
+          #281812 85%,
+          #3e2723 100%
+        );
+        box-shadow: 
+          0 10px 30px rgba(0,0,0,0.8), /* Drop shadow on floor */
+          inset 0 2px 5px rgba(255,255,255,0.1), /* Top highlight */
+          inset 0 -10px 20px rgba(0,0,0,0.8); /* Inner curve shadow */
       }
+
+      .poker-felt {
+        background-color: #0d5c36;
+        background-image: 
+          radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%),
+          url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+        box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
+      }
+
+      .betting-line {
+        border: 2px solid rgba(255, 215, 0, 0.2);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+      }
+
       /* Perspective for cards */
       .perspective-1000 {
         perspective: 1000px;
