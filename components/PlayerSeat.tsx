@@ -7,68 +7,95 @@ interface PlayerSeatProps {
   player: Player;
   isActive: boolean;
   isDealer: boolean;
-  position: { top: string; left: string }; // Position percentage
+  avatarPos: { top: string; left: string };
+  cardPos: { top: string; left: string };
   isUser: boolean;
   gameState: GameState;
 }
 
-const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, position, isUser, gameState }) => {
+const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, avatarPos, cardPos, isUser, gameState }) => {
   const showCards = isUser || (gameState.phase === 'Showdown' && player.status !== 'FOLDED');
   const isFolded = player.status === PlayerStatus.FOLDED;
 
   return (
-    <div 
-      className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all duration-300 ${isFolded ? 'opacity-60 grayscale' : ''}`}
-      style={{ top: position.top, left: position.left }}
-    >
-      {/* Cards */}
-      <div className={`flex -space-x-4 mb-2 h-24 transition-transform duration-500 ${isFolded ? 'translate-y-4 scale-90 opacity-70' : ''}`}>
-         {player.status !== PlayerStatus.SITTING_OUT && player.cards.map((card, idx) => (
-             <div key={card.id || idx} className={`transform origin-bottom ${idx === 0 ? '-rotate-6' : 'rotate-6'} transition-transform hover:scale-110 z-10`}>
-                 <Card card={card} hidden={!showCards && !isFolded} /> 
-             </div>
-         ))}
-      </div>
-
-      {/* Avatar Bubble */}
-      <div className={`relative w-20 h-20 rounded-full border-4 flex flex-col items-center justify-center bg-gray-800 shadow-lg z-20
-        ${isActive ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'border-gray-600'}
-        ${isFolded ? 'border-red-900 bg-gray-900' : ''}
-      `}>
-         <img 
-            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${player.avatarSeed}`} 
-            alt="Avatar" 
-            className={`w-16 h-16 rounded-full ${isFolded ? 'opacity-50' : ''}`}
-         />
-         {isDealer && (
-            <div className="absolute -top-2 -right-2 bg-white text-black text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-gray-400 shadow">
-                D
+    <>
+      {/* --- CARDS CONTAINER (On the Table) --- */}
+      <div 
+        className={`absolute flex items-center justify-center transition-all duration-500 z-10 ${isFolded ? 'opacity-40 grayscale scale-90' : ''}`}
+        style={{ 
+            top: cardPos.top, 
+            left: cardPos.left,
+            transform: 'translate(-50%, -50%)',
+            width: '0px', height: '0px' // Point anchor
+        }}
+      >
+         <div className="flex -space-x-1 h-12 md:h-16 lg:h-20 hover:scale-110 transition-transform">
+            {player.status !== PlayerStatus.SITTING_OUT && player.cards.map((card, idx) => (
+                <div 
+                    key={card.id || idx} 
+                    className={`transform origin-bottom ${idx === 0 ? '-rotate-3' : 'rotate-3'} shadow-lg`}
+                >
+                    <Card card={card} hidden={!showCards && !isFolded} /> 
+                </div>
+            ))}
+         </div>
+         
+         {/* Current Bet Badge - Placed next to cards on the table */}
+         {player.currentBet > 0 && player.status !== 'FOLDED' && (
+            <div 
+                className="absolute -bottom-6 bg-yellow-600/90 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow border border-yellow-400 whitespace-nowrap backdrop-blur-sm"
+            >
+                ${Math.floor(player.currentBet)}
             </div>
          )}
       </div>
 
-      {/* Stats */}
-      <div className="mt-1 bg-black/80 text-white text-xs px-3 py-1 rounded-full text-center min-w-[100px] border border-gray-600 backdrop-blur-sm z-30">
-        <div className="font-bold truncate max-w-[90px]">{player.name}</div>
-        <div className="text-yellow-400 font-mono">${player.chips}</div>
-      </div>
+      {/* --- AVATAR CONTAINER (Outer Ring) --- */}
+      <div 
+        className={`absolute flex flex-col items-center justify-center transition-all duration-300 pointer-events-auto z-20 ${isFolded ? 'opacity-60' : ''}`}
+        style={{ 
+            top: avatarPos.top, 
+            left: avatarPos.left,
+            transform: 'translate(-50%, -50%)',
+            width: '0px', height: '0px'
+        }}
+      >
+          {/* Avatar Bubble */}
+          <div className="relative flex flex-col items-center">
+            <div className={`relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-4 flex flex-col items-center justify-center bg-gray-800 shadow-2xl
+                ${isActive ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-110' : 'border-gray-600'}
+                ${isFolded ? 'border-red-900 bg-gray-900' : ''}
+                transition-all duration-300
+            `}>
+                <img 
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${player.avatarSeed}`} 
+                    alt="Avatar" 
+                    className={`w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full ${isFolded ? 'opacity-50' : ''}`}
+                />
+                {isDealer && (
+                    <div className="absolute -top-1 -right-1 bg-white text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border border-gray-400 shadow">
+                        D
+                    </div>
+                )}
+            </div>
 
-      {/* Last Action / Status Badge */}
-      {player.lastAction && (
-        <div className={`absolute top-10 left-16 text-white text-xs font-bold px-2 py-0.5 rounded shadow-lg animate-pulse whitespace-nowrap z-40
-            ${player.lastAction === 'FOLD' ? 'bg-red-800' : 'bg-blue-600'}
-        `}>
-            {player.lastAction}
-        </div>
-      )}
-      
-      {/* Current Bet Badge */}
-      {player.currentBet > 0 && player.status !== 'FOLDED' && (
-          <div className="absolute -top-6 bg-yellow-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow border border-yellow-400 z-0">
-             Bet: ${player.currentBet}
+            {/* Name & Stack */}
+            <div className="mt-1 bg-black/80 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full text-center min-w-[70px] border border-gray-600 shadow-lg backdrop-blur-sm">
+                <div className="font-bold truncate max-w-[60px] sm:max-w-[80px]">{player.name}</div>
+                <div className="text-yellow-400 font-mono">${Math.floor(player.chips)}</div>
+            </div>
           </div>
-      )}
-    </div>
+
+          {/* Action Status Badge - Above Avatar */}
+          {player.lastAction && (
+            <div className={`absolute -top-8 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded shadow-lg animate-bounce whitespace-nowrap
+                ${player.lastAction === 'FOLD' ? 'bg-red-800' : 'bg-blue-600'}
+            `}>
+                {player.lastAction}
+            </div>
+          )}
+      </div>
+    </>
   );
 };
 

@@ -18,7 +18,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
           backgroundImage: 'repeating-linear-gradient(45deg, #1e3a8a 0, #1e3a8a 10px, #172554 10px, #172554 20px)',
       }}
     >
-      <div className="w-10 h-16 border border-blue-400 rounded opacity-50"></div>
+      <div className="w-8 h-12 sm:w-10 sm:h-16 border border-blue-400 rounded opacity-50"></div>
     </div>
   );
 
@@ -35,15 +35,15 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
     };
 
     return (
-      <div className="w-full h-full bg-white rounded-md border border-gray-300 shadow-md flex flex-col justify-between p-1 select-none">
-        <div className={`text-xs sm:text-sm font-bold leading-none ${isRed ? 'text-red-600' : 'text-black'}`}>
+      <div className="w-full h-full bg-white rounded-md border border-gray-300 shadow-md flex flex-col justify-between p-0.5 sm:p-1 select-none">
+        <div className={`text-[10px] sm:text-sm font-bold leading-none ${isRed ? 'text-red-600' : 'text-black'}`}>
           <div className="text-center">{rankDisplay(c.rank)}</div>
           <div className="text-center">{c.suit}</div>
         </div>
-        <div className={`absolute inset-0 flex items-center justify-center text-2xl sm:text-4xl ${isRed ? 'text-red-600' : 'text-black'}`}>
+        <div className={`absolute inset-0 flex items-center justify-center text-xl sm:text-4xl ${isRed ? 'text-red-600' : 'text-black'}`}>
           {c.suit}
         </div>
-        <div className={`text-xs sm:text-sm font-bold leading-none rotate-180 ${isRed ? 'text-red-600' : 'text-black'}`}>
+        <div className={`text-[10px] sm:text-sm font-bold leading-none rotate-180 ${isRed ? 'text-red-600' : 'text-black'}`}>
           <div className="text-center">{rankDisplay(c.rank)}</div>
           <div className="text-center">{c.suit}</div>
         </div>
@@ -51,10 +51,10 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
     );
   };
 
-  // If no card data provided (e.g. initial render placeholder), just show back static
+  // If no card data provided
   if (!card) {
       return (
-        <div className={`w-14 h-20 sm:w-16 sm:h-24 ${className}`} style={style}>
+        <div className={`w-12 h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 ${className}`} style={style}>
             <CardBack />
         </div>
       );
@@ -63,7 +63,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
   // 3D Flip Structure
   return (
     <div 
-      className={`relative w-14 h-20 sm:w-16 sm:h-24 perspective-1000 animate-deal ${className}`}
+      className={`relative w-12 h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 perspective-1000 animate-deal ${className}`}
       style={style}
     >
       <div 

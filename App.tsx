@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GameState, Player, GamePhase, PlayerStatus, HandResult, Card, GameEffect, BotDifficulty } from './types';
 import { createDeck, evaluateHand, getBotAction } from './services/pokerEngine';
 import { getStrategicAdvice } from './services/geminiService';
-import { playDeal, playChips, playCheck, playFold, playWin } from './services/audioService';
+import { playDeal, playChips, playCheck, playFold, playWin, startBGM, stopBGM, initAudio } from './services/audioService';
 import PlayerSeat from './components/PlayerSeat';
 import CardComponent from './components/Card';
 import Controls from './components/Controls';
@@ -35,6 +35,7 @@ const App: React.FC = () => {
   const [isAdviceLoading, setIsAdviceLoading] = useState(false);
   const [showAdviceModal, setShowAdviceModal] = useState(false);
   const [effects, setEffects] = useState<GameEffect[]>([]);
+  const [isBGMEnabled, setIsBGMEnabled] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const effectIdCounter = useRef(0);
 
@@ -43,9 +44,21 @@ const App: React.FC = () => {
     initializeGame();
     return () => {
         if (timerRef.current) clearTimeout(timerRef.current);
+        stopBGM();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const toggleBGMHandler = () => {
+      initAudio();
+      if (isBGMEnabled) {
+          stopBGM();
+          setIsBGMEnabled(false);
+      } else {
+          startBGM();
+          setIsBGMEnabled(true);
+      }
+  };
 
   // Listen for wins to play sound and VFX
   useEffect(() => {
@@ -81,19 +94,36 @@ const App: React.FC = () => {
       setEffects(prev => prev.filter(e => e.id !== id));
   };
 
+  // Calculate positions for Avatar (Outer) and Cards (Inner/Table)
   const getPlayerPosition = (index: number, totalPlayers: number) => {
       const angleStep = 360 / totalPlayers;
+      // Start at 90deg (bottom) to have user centered if index 0
       const startAngle = 90; 
       const angleDeg = startAngle + (index * angleStep);
       const angleRad = angleDeg * (Math.PI / 180);
       
-      const rx = 42; 
-      const ry = 38; 
+      // Avatar Radius (Outer Ring - near screen edge)
+      // Elliptical distribution to match screen aspect ratio roughly
+      const avRx = 45; // 45% of width
+      const avRy = 42; // 42% of height
       
-      const x = 50 + rx * Math.cos(angleRad);
-      const y = 50 + ry * Math.sin(angleRad);
+      const avX = 50 + avRx * Math.cos(angleRad);
+      const avY = 50 + avRy * Math.sin(angleRad);
+
+      // Card Radius (Inner Ring - ON THE TABLE)
+      // The table is roughly 60-90% width and 30-50% height
+      // We want cards to land on the felt.
+      // Felt is Aspect 2:1.
+      const cardRx = 28; // Closer to center horizontally
+      const cardRy = 20; // Closer to center vertically to fit on the flattened table view
       
-      return { left: `${x}%`, top: `${y}%` };
+      const cardX = 50 + cardRx * Math.cos(angleRad);
+      const cardY = 50 + cardRy * Math.sin(angleRad);
+      
+      return { 
+          avatar: { left: `${avX}%`, top: `${avY}%` },
+          cards: { left: `${cardX}%`, top: `${cardY}%` }
+      };
   };
 
   const initializeGame = () => {
@@ -178,18 +208,17 @@ const App: React.FC = () => {
     const bbPlayer = nextPlayers[bbIndex];
 
     if (!sbPlayer || !bbPlayer) {
-        console.error("Critical: Could not identify blinds players.");
         return;
     }
 
-    // Apply Blinds
-    const sbAmount = Math.min(sbPlayer.chips, SMALL_BLIND);
+    // Apply Blinds - Integers Only
+    const sbAmount = Math.floor(Math.min(sbPlayer.chips, SMALL_BLIND));
     sbPlayer.chips -= sbAmount;
     sbPlayer.currentBet = sbAmount;
     sbPlayer.totalHandBet = sbAmount;
     sbPlayer.lastAction = 'SB';
 
-    const bbAmount = Math.min(bbPlayer.chips, BIG_BLIND);
+    const bbAmount = Math.floor(Math.min(bbPlayer.chips, BIG_BLIND));
     bbPlayer.chips -= bbAmount;
     bbPlayer.currentBet = bbAmount;
     bbPlayer.totalHandBet = bbAmount;
@@ -222,7 +251,7 @@ const App: React.FC = () => {
          timerRef.current = setTimeout(() => {
              const nextDealer = (gameState.dealerIndex + 1) % gameState.players.length;
              startNewHand(gameState.players, nextDealer);
-         }, 8000); // Increased delay to show off the victory VFX
+         }, 8000); 
          return;
     }
 
@@ -266,21 +295,23 @@ const App: React.FC = () => {
 
     // Trigger VFX
     const playerPos = getPlayerPosition(playerId, gameState.players.length);
+    // Use Avatar position for VFX text
+    const vfxPos = playerPos.avatar; 
     
     // UI VFX Triggers
     if (action === 'fold') {
-        triggerEffect({ type: 'TEXT', content: 'FOLD', color: 'text-red-500', startPos: playerPos });
+        triggerEffect({ type: 'TEXT', content: 'FOLD', color: 'text-red-500', startPos: vfxPos });
     } else if (action === 'check') {
-        triggerEffect({ type: 'TEXT', content: 'CHECK', color: 'text-gray-300', startPos: playerPos });
+        triggerEffect({ type: 'TEXT', content: 'CHECK', color: 'text-gray-300', startPos: vfxPos });
     } else if (action === 'all-in') {
-        triggerEffect({ type: 'TEXT', content: 'ALL IN!', color: 'text-orange-500', startPos: playerPos });
-        triggerEffect({ type: 'CHIP', startPos: playerPos });
+        triggerEffect({ type: 'TEXT', content: 'ALL IN!', color: 'text-orange-500', startPos: vfxPos });
+        triggerEffect({ type: 'CHIP', startPos: vfxPos });
     } else if (action === 'call') {
-        triggerEffect({ type: 'TEXT', content: 'CALL', color: 'text-blue-400', startPos: playerPos });
-        triggerEffect({ type: 'CHIP', startPos: playerPos });
+        triggerEffect({ type: 'TEXT', content: 'CALL', color: 'text-blue-400', startPos: vfxPos });
+        triggerEffect({ type: 'CHIP', startPos: vfxPos });
     } else if (action === 'raise') {
-        triggerEffect({ type: 'TEXT', content: `RAISE TO $${amount}`, color: 'text-green-400', startPos: playerPos });
-        triggerEffect({ type: 'CHIP', startPos: playerPos });
+        triggerEffect({ type: 'TEXT', content: `RAISE TO $${Math.floor(amount || 0)}`, color: 'text-green-400', startPos: vfxPos });
+        triggerEffect({ type: 'CHIP', startPos: vfxPos });
     }
 
     setGameState(prev => {
@@ -302,7 +333,6 @@ const App: React.FC = () => {
 
       if (action === 'fold') {
         player.status = PlayerStatus.FOLDED;
-        // Don't clear cards here, so we can show them folded/mucked
       } else if (action === 'check') {
           // Check logic
       } else if (action === 'call') {
@@ -321,11 +351,7 @@ const App: React.FC = () => {
             player.totalHandBet += toCall;
         }
       } else if (action === 'raise') {
-        const raiseTotal = amount || (prev.currentBet + prev.minRaise);
-        
-        // Safety: ensure raise is valid. If less than min raise (and not all-in), fallback to call logic handled by caller or reject
-        // Here we assume if it's less, it's a mistake and we treat it as valid if >= current bet, otherwise just Call?
-        // But for consistency:
+        const raiseTotal = Math.floor(amount || (prev.currentBet + prev.minRaise));
         const actualRaise = raiseTotal - player.currentBet; 
         
         if (player.chips <= actualRaise) {
@@ -379,7 +405,7 @@ const App: React.FC = () => {
     let winners: { playerId: number, amount: number, handName: string }[] = [];
 
     if (earlyWin) {
-        winners = [{ playerId: activePlayers[0].id, amount: pot, handName: 'Opponents Folded' }];
+        winners = [{ playerId: activePlayers[0].id, amount: Math.floor(pot), handName: 'Opponents Folded' }];
     } else {
         const results = activePlayers.map(p => ({
             playerId: p.id,
@@ -390,13 +416,20 @@ const App: React.FC = () => {
         const winner = results[0];
         const ties = results.filter(r => r.hand.score === winner.hand.score);
         
+        // Integer Division
         const winAmount = Math.floor(pot / ties.length);
-        winners = ties.map(t => ({ playerId: t.playerId, amount: winAmount, handName: t.hand.rankName }));
+        const remainder = pot % ties.length; // Extra chips go to first winner (simplified rule)
+        
+        winners = ties.map((t, idx) => ({ 
+            playerId: t.playerId, 
+            amount: winAmount + (idx === 0 ? remainder : 0), 
+            handName: t.hand.rankName 
+        }));
     }
 
     const updatedPlayers = players.map(p => {
         const win = winners.find(w => w.playerId === p.id);
-        if (win) return { ...p, chips: p.chips + win.amount };
+        if (win) return { ...p, chips: Math.floor(p.chips + win.amount) };
         return p;
     });
 
@@ -549,54 +582,67 @@ const App: React.FC = () => {
                 <p className="text-sm text-gray-300">Blinds: {SMALL_BLIND}/{BIG_BLIND}</p>
              </div>
              
-             {/* Difficulty Selector */}
-             <div className="bg-black/50 p-2 rounded backdrop-blur-sm flex flex-col">
-                <label className="text-xs text-gray-400 font-bold mb-1">Bot Difficulty</label>
-                <select 
-                    value={gameState.difficulty}
-                    onChange={changeDifficulty}
-                    className="bg-gray-800 text-white text-sm rounded border border-gray-600 px-2 py-1 outline-none focus:border-yellow-500"
-                >
-                    <option value={BotDifficulty.EASY}>Easy (Loose Passive)</option>
-                    <option value={BotDifficulty.MEDIUM}>Medium (Balanced)</option>
-                    <option value={BotDifficulty.HARD}>Hard (Tight Aggressive)</option>
-                </select>
+             <div className="flex gap-2">
+                 <div className="bg-black/50 p-2 rounded backdrop-blur-sm flex flex-col">
+                    <label className="text-xs text-gray-400 font-bold mb-1">Difficulty</label>
+                    <select 
+                        value={gameState.difficulty}
+                        onChange={changeDifficulty}
+                        className="bg-gray-800 text-white text-sm rounded border border-gray-600 px-2 py-1 outline-none focus:border-yellow-500"
+                    >
+                        <option value={BotDifficulty.EASY}>Easy</option>
+                        <option value={BotDifficulty.MEDIUM}>Medium</option>
+                        <option value={BotDifficulty.HARD}>Hard</option>
+                    </select>
+                 </div>
+                 <button 
+                    onClick={toggleBGMHandler}
+                    className={`p-2 rounded backdrop-blur-sm border ${isBGMEnabled ? 'bg-green-900/50 border-green-500 text-green-300' : 'bg-black/50 border-gray-600 text-gray-400'}`}
+                 >
+                     {isBGMEnabled ? '♫ On' : '♫ Off'}
+                 </button>
              </div>
          </div>
          
          <div className="bg-black/50 p-2 rounded text-white backdrop-blur-sm">
-             <div className="text-center text-lg font-mono text-green-400">POT: ${gameState.pot}</div>
+             <div className="text-center text-lg font-mono text-green-400">POT: ${Math.floor(gameState.pot)}</div>
              <div className="text-xs text-gray-400 text-center">{gameState.message}</div>
          </div>
       </div>
 
-      {/* Game Table Area */}
+      {/* Game Arena - Full Screen Container */}
       <div className="flex-grow relative flex items-center justify-center bg-gray-900 overflow-hidden">
-        {/* The Felt */}
-        <div className="poker-felt relative w-[95%] sm:w-[85%] aspect-[1.8/1] rounded-[200px] shadow-[0_0_50px_rgba(0,0,0,0.8)_inset] border-[16px] border-[#2c1e12] flex items-center justify-center">
-            
+        
+        {/* The Felt - Visual Table Only */}
+        <div className="poker-felt relative w-[90%] sm:w-[70%] md:w-[60%] aspect-[2/1] rounded-[200px] shadow-[0_0_50px_rgba(0,0,0,0.8)_inset] border-[16px] border-[#2c1e12] flex items-center justify-center z-0">
             {/* Community Cards */}
-            <div className="flex gap-2 sm:gap-4 z-10 mb-8">
+            <div className="flex gap-2 sm:gap-4 z-10 mb-2 sm:mb-8">
                 {gameState.communityCards.map((card, idx) => (
                     <CardComponent key={idx} card={card} />
                 ))}
                 {Array.from({ length: 5 - gameState.communityCards.length }).map((_, idx) => (
-                    <div key={`placeholder-${idx}`} className="w-14 h-20 sm:w-16 sm:h-24 border-2 border-white/20 rounded-md bg-black/10"></div>
+                    <div key={`placeholder-${idx}`} className="w-12 h-16 md:w-16 md:h-24 border-2 border-white/20 rounded-md bg-black/10"></div>
                 ))}
             </div>
+        </div>
 
-            {/* Players */}
-            {gameState.players.map((player) => (
-                <PlayerSeat 
-                    key={player.id}
-                    player={player}
-                    isActive={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === player.id)}
-                    isDealer={gameState.dealerIndex === gameState.players.findIndex(p => p.id === player.id)}
-                    position={getPlayerPosition(player.id, gameState.players.length)}
-                    isUser={!player.isBot}
-                    gameState={gameState}
-                />
-            ))}
+        {/* Players Overlay - Positioned relative to the full Arena */}
+        <div className="absolute inset-0 z-10 pointer-events-none">
+            {gameState.players.map((player, idx) => {
+                const positions = getPlayerPosition(player.id, gameState.players.length);
+                return (
+                    <PlayerSeat 
+                        key={player.id}
+                        player={player}
+                        isActive={gameState.currentPlayerIndex === gameState.players.findIndex(p => p.id === player.id)}
+                        isDealer={gameState.dealerIndex === gameState.players.findIndex(p => p.id === player.id)}
+                        avatarPos={positions.avatar}
+                        cardPos={positions.cards}
+                        isUser={!player.isBot}
+                        gameState={gameState}
+                    />
+                );
+            })}
         </div>
       </div>
 
