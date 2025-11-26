@@ -32,6 +32,7 @@ export const getStrategicAdvice = async (gameState: GameState, player: Player): 
       model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
+        // Enable thinking mode for deeper strategic analysis
         thinkingConfig: { thinkingBudget: 32768 },
       }
     });

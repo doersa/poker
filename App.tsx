@@ -130,11 +130,14 @@ const App: React.FC = () => {
       if (isPortrait) {
           // Portrait table aspect ratio is ~1.3:1
           cardRx = 40; 
-          cardRy = 34; // Adjusted to be safe from rail and center
+          // Adjusted to be safe from rail and center
+          cardRy = 34; 
       } else {
           // Landscape table aspect ratio is ~2.2:1
+          // Reduce vertical radius slightly to ensure cards don't clip the rail padding
+          // even during deal animations.
           cardRx = 45; 
-          cardRy = 33; // Reduced to 33% to prevent clipping rail at top/bottom
+          cardRy = 31; 
       }
       
       const cardX = 50 + cardRx * Math.cos(angleRad);
