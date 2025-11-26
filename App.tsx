@@ -129,12 +129,12 @@ const App: React.FC = () => {
 
       if (isPortrait) {
           // Portrait table aspect ratio is ~1.3:1
-          cardRx = 40; // Slightly reduced from 42 to avoid edge clipping
-          cardRy = 36; // Pushed out to 36% (from 28%) to keep clear of center
+          cardRx = 40; 
+          cardRy = 34; // Adjusted to be safe from rail and center
       } else {
           // Landscape table aspect ratio is ~2.2:1
-          cardRx = 45; // Pushed out slightly
-          cardRy = 39; // Pushed out to 39% (from 32%) to keep clear of center
+          cardRx = 45; 
+          cardRy = 33; // Reduced to 33% to prevent clipping rail at top/bottom
       }
       
       const cardX = 50 + cardRx * Math.cos(angleRad);
@@ -753,7 +753,7 @@ const App: React.FC = () => {
             {isAdviceLoading ? (
                 <div className="flex flex-col items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
-                    <p className="text-gray-600 animate-pulse">Analyzing table dynamics...</p>
+                    <p className="text-gray-600 animate-pulse">Thinking...</p>
                 </div>
             ) : (
                 <div className="prose">

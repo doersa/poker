@@ -19,7 +19,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style, flipOn
       // Small buffer to ensure the deal animation starts before flipping
       const timer = setTimeout(() => {
         setIsFlipped(false);
-      }, flipDelay + 50);
+      }, flipDelay + 100);
       return () => clearTimeout(timer);
     }
   }, [flipOnMount, flipDelay]);

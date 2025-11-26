@@ -33,10 +33,9 @@ export const getStrategicAdvice = async (gameState: GameState, player: Player): 
       contents: prompt,
       config: {
         thinkingConfig: { thinkingBudget: 32768 },
-        // do not set maxOutputTokens
       }
     });
-    return response.text;
+    return response.text || "No advice generated.";
   } catch (error) {
     console.error("Gemini API Error:", error);
     return "I can't analyze the table right now. Trust your gut!";
