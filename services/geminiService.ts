@@ -29,8 +29,12 @@ export const getStrategicAdvice = async (gameState: GameState, player: Player): 
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
+      config: {
+        thinkingConfig: { thinkingBudget: 32768 },
+        // do not set maxOutputTokens
+      }
     });
     return response.text;
   } catch (error) {

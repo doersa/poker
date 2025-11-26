@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GameState, Player, GamePhase, PlayerStatus, HandResult, Card, GameEffect, BotDifficulty } from './types';
 import { createDeck, evaluateHand, getBotAction } from './services/pokerEngine';
@@ -658,7 +657,12 @@ const App: React.FC = () => {
                 {/* Community Cards - Removed bottom margin to center properly */}
                 <div className="flex gap-1 sm:gap-2 md:gap-4 z-10">
                     {gameState.communityCards.map((card, idx) => (
-                        <CardComponent key={idx} card={card} />
+                        <CardComponent 
+                          key={idx} 
+                          card={card} 
+                          flipOnMount={true}
+                          flipDelay={idx * 150}
+                        />
                     ))}
                     {Array.from({ length: 5 - gameState.communityCards.length }).map((_, idx) => (
                         <div key={`placeholder-${idx}`} className="w-10 h-14 sm:w-12 sm:h-16 md:w-16 md:h-24 border-2 border-white/10 rounded-md bg-black/20"></div>

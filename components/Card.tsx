@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card as CardType, Suit } from '../types';
 
 interface CardProps {
@@ -7,9 +6,27 @@ interface CardProps {
   hidden?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  flipOnMount?: boolean;
+  flipDelay?: number;
 }
 
-const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
+const Card: React.FC<CardProps> = ({ card, hidden, className = '', style, flipOnMount, flipDelay = 0 }) => {
+  // Internal state to handle the flip animation on mount
+  const [isFlipped, setIsFlipped] = useState(!!flipOnMount);
+
+  useEffect(() => {
+    if (flipOnMount) {
+      // Small buffer to ensure the deal animation starts before flipping
+      const timer = setTimeout(() => {
+        setIsFlipped(false);
+      }, flipDelay + 50);
+      return () => clearTimeout(timer);
+    }
+  }, [flipOnMount, flipDelay]);
+
+  // Determine if the back should be shown based on props or animation state
+  const showBack = hidden || isFlipped;
+
   // Back of card UI
   const CardBack = () => (
     <div 
@@ -64,7 +81,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
     );
   };
 
-  // If no card data provided
+  // If no card data provided (e.g. placeholder)
   if (!card) {
       return (
         <div className={`w-8 h-12 sm:w-12 sm:h-16 md:w-14 md:h-20 lg:w-16 lg:h-24 ${className}`} style={style}>
@@ -80,7 +97,7 @@ const Card: React.FC<CardProps> = ({ card, hidden, className = '', style }) => {
       style={style}
     >
       <div 
-        className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${hidden ? 'rotate-y-180' : ''}`}
+        className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${showBack ? 'rotate-y-180' : ''}`}
       >
         {/* Front Face (Visible when not hidden) */}
         <div className="absolute inset-0 backface-hidden">
