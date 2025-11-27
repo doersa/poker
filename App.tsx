@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GameState, Player, GamePhase, PlayerStatus, HandResult, Card, GameEffect, BotDifficulty } from './types';
 import { createDeck, evaluateHand, getBotAction } from './services/pokerEngine';
@@ -83,15 +82,26 @@ const App: React.FC = () => {
           });
 
           // Trigger Big Banner
-          const winnerName = gameState.players.find(p => p.id === gameState.winners[0].playerId)?.name || 'Unknown';
-          const winAmount = gameState.winners.reduce((acc, w) => acc + w.amount, 0);
-          const handName = gameState.winners[0].handName;
+          let bannerTitle = '';
+          let bannerSubtitle = '';
+          
+          if (gameState.winners.length === 1) {
+              const winner = gameState.winners[0];
+              const p = gameState.players.find(pl => pl.id === winner.playerId);
+              const winAmount = winner.amount;
+              bannerTitle = `${p?.name || 'Player'} WINS!`;
+              bannerSubtitle = `${winner.handName} • $${Math.floor(winAmount)}`;
+          } else {
+              const winAmount = gameState.winners[0].amount;
+              bannerTitle = 'SPLIT POT';
+              bannerSubtitle = `${gameState.winners.length} Players • $${Math.floor(winAmount)} each`;
+          }
           
           triggerEffect({
             type: 'WIN_BANNER',
             startPos: { left: '50%', top: '50%' },
-            content: `${winnerName} WINS!`,
-            subContent: `${handName} • $${winAmount}`
+            content: bannerTitle,
+            subContent: bannerSubtitle
           });
       }
   }, [gameState.winners]);
@@ -647,8 +657,8 @@ const App: React.FC = () => {
                 p-[20px] sm:p-[30px] /* Padding creates the Rail width */
             `}
         >
-            {/* The Felt (Inner) */}
-            <div className="poker-felt w-full h-full rounded-[450px] relative shadow-inner flex items-center justify-center border-4 border-black/20">
+            {/* The Felt (Inner) - Added overflow-hidden to clip incoming cards */}
+            <div className="poker-felt w-full h-full rounded-[450px] relative shadow-inner flex items-center justify-center border-4 border-black/20 overflow-hidden">
                 
                 {/* Betting Line (Decorative) */}
                 <div className="absolute inset-8 sm:inset-16 rounded-[400px] betting-line pointer-events-none opacity-50"></div>
@@ -663,10 +673,12 @@ const App: React.FC = () => {
                 <div className="flex gap-1 sm:gap-2 md:gap-4 z-10">
                     {gameState.communityCards.map((card, idx) => (
                         <CardComponent 
-                          key={idx} 
+                          key={card.id} 
                           card={card} 
                           flipOnMount={true}
-                          flipDelay={idx * 150}
+                          // Flop cards (0,1,2) get staggered delays. 
+                          // Turn (3) and River (4) get a longer base delay to allow the slide to finish before flipping.
+                          flipDelay={idx < 3 ? 500 + idx * 150 : 500}
                         />
                     ))}
                     {Array.from({ length: 5 - gameState.communityCards.length }).map((_, idx) => (

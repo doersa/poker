@@ -33,6 +33,7 @@ export const getStrategicAdvice = async (gameState: GameState, player: Player): 
       contents: prompt,
       config: {
         // Enable thinking mode for deeper strategic analysis
+        // Max budget for Gemini 3 Pro is 32768
         thinkingConfig: { thinkingBudget: 32768 },
       }
     });

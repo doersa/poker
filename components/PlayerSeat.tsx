@@ -17,6 +17,9 @@ const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, par
   const showCards = isUser || (gameState.phase === 'Showdown' && player.status !== 'FOLDED');
   const isFolded = player.status === PlayerStatus.FOLDED;
   const isAllIn = player.status === PlayerStatus.ALL_IN;
+  const isWinner = gameState.winners.some(w => w.playerId === player.id);
+  const isRaise = player.lastAction === 'RAISE';
+  const hasBet = player.currentBet > 0 && !isFolded && !isAllIn;
 
   // --- RENDER HAND (Inside Table) ---
   if (part === 'hand') {
@@ -54,6 +57,28 @@ const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, par
     );
   }
 
+  // --- Determine Avatar Styles based on Priority ---
+  let borderClass = 'border-gray-600';
+  let effectClass = '';
+  
+  if (isWinner) {
+      borderClass = 'border-green-400';
+      effectClass = 'shadow-[0_0_40px_rgba(74,222,128,0.8)] scale-125 ring-4 ring-green-500/50 z-50 animate-bounce';
+  } else if (isAllIn) {
+      borderClass = 'border-orange-500';
+      effectClass = 'shadow-[0_0_30px_rgba(249,115,22,0.9)] scale-110 ring-2 ring-orange-400 animate-pulse';
+  } else if (isActive) {
+      borderClass = 'border-yellow-400';
+      effectClass = 'shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-110';
+  } else if (isRaise && !isFolded) {
+      // Distinct style for Raise: Green glow and slight scale, indicating aggression
+      borderClass = 'border-green-500';
+      effectClass = 'shadow-[0_0_25px_rgba(34,197,94,0.7)] scale-110';
+  } else if (isFolded) {
+      borderClass = 'border-red-900 bg-gray-900';
+      effectClass = ''; 
+  }
+
   // --- RENDER AVATAR (Outside Ring) ---
   return (
       <div 
@@ -67,11 +92,18 @@ const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, par
       >
           {/* Avatar Bubble */}
           <div className="relative flex flex-col items-center">
-            <div className={`relative w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full border-4 flex flex-col items-center justify-center bg-gray-800 shadow-2xl
-                ${isActive ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-110' : 'border-gray-600'}
-                ${isFolded ? 'border-red-900 bg-gray-900' : ''}
-                ${isAllIn ? 'border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.9)] scale-110 ring-2 ring-orange-400 animate-pulse' : ''}
-                transition-all duration-300
+            
+            {/* Active Bet Indicator Ring */}
+            {hasBet && (
+                <div 
+                    className="absolute top-0 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full border-[1.5px] sm:border-2 border-dashed border-yellow-400/60 animate-[spin_8s_linear_infinite] pointer-events-none"
+                    style={{ transform: 'scale(1.15)' }}
+                ></div>
+            )}
+
+            <div className={`relative w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full border-4 flex flex-col items-center justify-center bg-gray-800 shadow-2xl transition-all duration-300
+                ${borderClass}
+                ${effectClass}
             `}>
                 <img 
                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${player.avatarSeed}`} 
@@ -86,17 +118,18 @@ const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isActive, isDealer, par
             </div>
 
             {/* Name & Stack */}
-            <div className="mt-1 bg-black/80 text-white text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full text-center min-w-[50px] sm:min-w-[70px] border border-gray-600 shadow-lg backdrop-blur-sm">
+            <div className="mt-1 bg-black/80 text-white text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full text-center min-w-[50px] sm:min-w-[70px] border border-gray-600 shadow-lg backdrop-blur-sm z-10">
                 <div className="font-bold truncate max-w-[45px] sm:max-w-[75px]">{player.name}</div>
-                <div className="text-yellow-400 font-mono">${Math.floor(player.chips)}</div>
+                <div className={`font-mono ${isWinner ? 'text-green-400 font-bold' : 'text-yellow-400'}`}>${Math.floor(player.chips)}</div>
             </div>
           </div>
 
           {/* Action Status Badge - Above Avatar */}
           {player.lastAction && (
-            <div className={`absolute -top-5 sm:-top-8 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded shadow-lg animate-bounce whitespace-nowrap
+            <div className={`absolute -top-5 sm:-top-8 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded shadow-lg animate-bounce whitespace-nowrap z-20
                 ${player.lastAction === 'FOLD' ? 'bg-red-800' : 'bg-blue-600'}
                 ${player.lastAction === 'ALL IN' ? 'bg-orange-600 scale-125' : ''}
+                ${player.lastAction === 'RAISE' ? 'bg-green-600' : ''}
             `}>
                 {player.lastAction}
             </div>

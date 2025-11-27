@@ -63,19 +63,19 @@
         transform: rotateY(180deg);
       }
       
-      /* Deal Animation - Refined for tighter fit */
+      /* Deal Animation - Slide from top */
       @keyframes deal-card {
         0% {
           opacity: 0;
-          transform: translateY(-10px) scale(0.9);
+          transform: translateY(-80px) scale(0.8) rotateX(20deg);
         }
         100% {
           opacity: 1;
-          transform: translateY(0) scale(1);
+          transform: translateY(0) scale(1) rotateX(0);
         }
       }
       .animate-deal {
-        animation: deal-card 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: deal-card 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
     </style>
   <script type="importmap">
